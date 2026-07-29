@@ -1,0 +1,314 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HisokaOS</title>
+<style>
+:root{
+  --accent:#2d8c6f; --accent2:#36a883;
+  --panel:#1d2128; --panel-text:#e7ecef; --win:#f6f7f9; --win-text:#1d2128;
+  --win-head:#e9edf1; --line:#d4d9de; --shadow:0 14px 40px rgba(0,0,0,.35);
+  --wall:linear-gradient(135deg,#1c3b34 0%,#264f44 45%,#1a2c3a 100%);
+  --radius:9px; --panelH:46px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,"Segoe UI",Ubuntu,Roboto,Helvetica,sans-serif;
+  -webkit-font-smoothing:antialiased;color:var(--win-text)}
+body.dark{--win:#262b33;--win-text:#e7ecef;--win-head:#1f242b;--line:#363c45}
+#desktop{position:fixed;inset:0;background:var(--wall);background-size:cover}
+
+/* boot */
+#boot{position:fixed;inset:0;background:#0c1014;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;z-index:9999;color:#dfe7ea;transition:opacity .6s}
+#boot .logo{font-size:64px;font-weight:800;letter-spacing:-2px;
+  background:linear-gradient(90deg,var(--accent2),#7fd3b6);-webkit-background-clip:text;background-clip:text;color:transparent}
+#boot .tag{color:#7d8a92;margin-top:4px;font-size:13px;letter-spacing:3px;text-transform:uppercase}
+#boot .bar{width:240px;height:4px;background:#222a30;border-radius:3px;margin-top:34px;overflow:hidden}
+#boot .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s}
+#boot .msg{color:#5c6970;font-size:12px;margin-top:14px;font-family:ui-monospace,monospace;height:16px}
+
+/* desktop icons */
+#icons{position:absolute;top:18px;left:18px;display:flex;flex-direction:column;gap:6px}
+.dicon{width:84px;height:84px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;color:#fff;cursor:pointer;text-shadow:0 1px 4px rgba(0,0,0,.6);user-select:none}
+.dicon:hover{background:rgba(255,255,255,.14)}
+.dicon .gl{font-size:30px}.dicon .lb{font-size:12px}
+
+/* panel */
+#panel{position:fixed;left:0;right:0;bottom:0;height:var(--panelH);background:var(--panel);color:var(--panel-text);
+  display:flex;align-items:center;gap:6px;padding:0 8px;z-index:5000;box-shadow:0 -2px 14px rgba(0,0,0,.3)}
+#startbtn{display:flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:7px;cursor:pointer;font-weight:600}
+#startbtn:hover{background:rgba(255,255,255,.1)}
+#startbtn .h{width:18px;height:18px;border-radius:5px;background:linear-gradient(135deg,var(--accent2),#7fd3b6)}
+#tasks{flex:1;display:flex;gap:5px;overflow:hidden}
+.task{display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:7px;background:rgba(255,255,255,.06);
+  cursor:pointer;font-size:13px;max-width:190px;white-space:nowrap;overflow:hidden;border-bottom:2px solid transparent}
+.task:hover{background:rgba(255,255,255,.13)}.task.active{background:rgba(255,255,255,.16);border-bottom-color:var(--accent2)}
+#tray{display:flex;align-items:center;gap:14px;padding:0 8px;font-size:13px}
+#tray .ic{cursor:pointer;opacity:.85}#tray .ic:hover{opacity:1}
+#clock{text-align:right;line-height:1.15;cursor:default}#clock b{font-size:13px;display:block}#clock span{font-size:11px;opacity:.7}
+
+/* start menu */
+#startmenu{position:fixed;left:8px;bottom:calc(var(--panelH) + 8px);width:420px;height:480px;background:var(--win);
+  color:var(--win-text);border-radius:12px;box-shadow:var(--shadow);z-index:6000;display:none;flex-direction:column;
+  overflow:hidden;border:1px solid var(--line)}
+#startmenu.open{display:flex;animation:pop .14s ease}
+@keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}}
+#startmenu .top{padding:14px;border-bottom:1px solid var(--line)}
+#startmenu input{width:100%;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 12px;font-size:14px;
+  background:transparent;color:inherit;outline:none}
+#startmenu input:focus{border-color:var(--accent)}
+#applist{flex:1;overflow:auto;padding:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;align-content:start}
+.app{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 6px;border-radius:9px;cursor:pointer;text-align:center}
+.app:hover{background:rgba(127,127,127,.13)}
+.app .gl{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;
+  background:rgba(45,140,111,.14);color:var(--accent)}
+.app .nm{font-size:12px}
+#startmenu .bottom{height:46px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 14px}
+#startmenu .bottom .user{font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center}
+#startmenu .bottom .user .av{width:24px;height:24px;border-radius:50%;background:var(--accent)}
+#startmenu .pw{display:flex;gap:4px}#startmenu .pw button{border:0;background:transparent;cursor:pointer;font-size:15px;padding:6px 8px;border-radius:6px;color:inherit}
+#startmenu .pw button:hover{background:rgba(127,127,127,.15)}
+
+/* windows */
+.window{position:absolute;background:var(--win);color:var(--win-text);border-radius:var(--radius);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;overflow:hidden;min-width:280px;min-height:170px;border:1px solid var(--line)}
+.window.min{display:none}
+.window .head{height:38px;background:var(--win-head);display:flex;align-items:center;padding:0 6px 0 12px;cursor:move;user-select:none;border-bottom:1px solid var(--line)}
+.window .head .ti{flex:1;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.window .head .ti .g{color:var(--accent)}
+.window .head .btns{display:flex;gap:2px}
+.window .head .btns button{width:30px;height:28px;border:0;background:transparent;cursor:pointer;border-radius:6px;font-size:13px;color:inherit}
+.window .head .btns button:hover{background:rgba(127,127,127,.16)}
+.window .head .btns .x:hover{background:#e5484d;color:#fff}
+.window .body{flex:1;overflow:auto;position:relative}
+.rsz{position:absolute;width:16px;height:16px;right:0;bottom:0;cursor:nwse-resize}
+
+/* app: generic */
+.pad{padding:18px}
+.welcome h1{font-size:24px;margin-bottom:6px}.welcome p{color:#8a949b;line-height:1.6;margin-bottom:10px;max-width:460px}
+.welcome .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.welcome .chip{padding:6px 12px;border:1px solid var(--line);border-radius:20px;font-size:12px;cursor:pointer}
+.welcome .chip:hover{border-color:var(--accent);color:var(--accent)}
+
+/* calculator */
+.calc{padding:12px;display:flex;flex-direction:column;gap:10px;height:100%}
+.calc .disp{background:rgba(127,127,127,.1);border-radius:10px;padding:16px;text-align:right;font-size:30px;font-weight:600;min-height:64px;overflow:hidden}
+.calc .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex:1}
+.calc button{border:0;border-radius:10px;font-size:18px;cursor:pointer;background:rgba(127,127,127,.1);color:inherit}
+.calc button:hover{background:rgba(127,127,127,.2)}.calc button.op{background:var(--accent);color:#fff}
+.calc button.eq{background:var(--accent2);color:#fff;grid-column:span 2}
+
+/* editor */
+.editor{display:flex;flex-direction:column;height:100%}
+.editor .tb{height:36px;display:flex;align-items:center;gap:6px;padding:0 10px;border-bottom:1px solid var(--line);font-size:12px;color:#8a949b}
+.editor .tb button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px}
+.editor textarea{flex:1;border:0;resize:none;outline:none;padding:14px;font-family:ui-monospace,monospace;font-size:14px;background:transparent;color:inherit;line-height:1.55}
+
+/* terminal */
+.term{height:100%;background:#11151a;color:#cfe;font-family:ui-monospace,monospace;font-size:13px;padding:12px;overflow:auto;line-height:1.5}
+.term .in{display:flex;gap:6px}.term .in input{flex:1;background:transparent;border:0;color:#cfe;outline:none;font:inherit}
+.term .pr{color:#5fd3a6}
+
+/* settings */
+.settings{display:flex;height:100%}
+.settings .nav{width:150px;border-right:1px solid var(--line);padding:8px}
+.settings .nav div{padding:9px 12px;border-radius:7px;cursor:pointer;font-size:13px}
+.settings .nav div.on{background:var(--accent);color:#fff}.settings .nav div:hover:not(.on){background:rgba(127,127,127,.12)}
+.settings .pane{flex:1;padding:18px;overflow:auto}
+.settings .row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+.settings .row .lbl{font-size:14px}.settings .row .sub{font-size:12px;color:#8a949b}
+.swatches{display:flex;gap:8px}.swatches .sw{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.swatches .sw.on{border-color:var(--win-text)}
+.walls{display:flex;gap:8px;flex-wrap:wrap}.walls .w{width:64px;height:40px;border-radius:7px;cursor:pointer;border:2px solid transparent}
+.walls .w.on{border-color:var(--accent)}
+.toggle{width:44px;height:25px;border-radius:14px;background:rgba(127,127,127,.3);position:relative;cursor:pointer}
+.toggle.on{background:var(--accent)}.toggle i{position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.18s}
+.toggle.on i{left:22px}
+
+/* files */
+.files{display:flex;height:100%}
+.files .side{width:150px;border-right:1px solid var(--line);padding:8px;font-size:13px}
+.files .side div{padding:8px 10px;border-radius:7px;cursor:pointer}.files .side div:hover{background:rgba(127,127,127,.12)}
+.files .main{flex:1;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,84px);gap:10px;align-content:start}
+.files .f{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:8px;border-radius:8px;text-align:center}
+.files .f:hover{background:rgba(127,127,127,.12)}.files .f .g{font-size:34px}.files .f .n{font-size:11px}
+</style></head>
+<body>
+<div id="desktop">
+  <div id="icons"></div>
+  <div id="panel">
+    <div id="startbtn"><span class="h"></span> HisokaOS</div>
+    <div id="tasks"></div>
+    <div id="tray"><span class="ic" title="Network">📶</span><span class="ic" title="Volume">🔊</span>
+      <div id="clock"><b>--:--</b><span>---</span></div></div>
+  </div>
+  <div id="startmenu">
+    <div class="top"><input id="appsearch" placeholder="Search apps…"></div>
+    <div id="applist"></div>
+    <div class="bottom"><div class="user"><span class="av"></span> jeffery</div>
+      <div class="pw"><button title="Lock" data-pw="lock">🔒</button><button title="Restart" data-pw="restart">🔄</button><button title="Shut down" data-pw="off">⏻</button></div></div>
+  </div>
+</div>
+<div id="boot"><div class="logo">HisokaOS</div><div class="tag">desktop</div>
+  <div class="bar"><i id="bootbar"></i></div><div class="msg" id="bootmsg"></div></div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s), el=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e;};
+const store={get:(k,d)=>{try{return JSON.parse(localStorage['hisoka_'+k])}catch{return d}},set:(k,v)=>localStorage['hisoka_'+k]=JSON.stringify(v)};
+
+/* ---------- boot ---------- */
+const BOOTMSGS=["initializing kernel…","mounting filesystem…","starting display server…","loading desktop…","starting session…"];
+function boot(){
+  let p=0,i=0;const bar=$('#bootbar'),msg=$('#bootmsg');
+  const t=setInterval(()=>{p+=Math.random()*22+8;if(p>100)p=100;bar.style.width=p+'%';
+    msg.textContent=BOOTMSGS[Math.min(i++,BOOTMSGS.length-1)];
+    if(p>=100){clearInterval(t);setTimeout(()=>{$('#boot').style.opacity=0;setTimeout(()=>$('#boot').style.display='none',600)},450)}},260);
+}
+
+/* ---------- theme / settings ---------- */
+const ACCENTS={Emerald:['#2d8c6f','#36a883'],Ocean:['#2563eb','#3b82f6'],Berry:['#9333ea','#a855f7'],Sunset:['#e0533d','#f1734f'],Slate:['#475569','#64748b']};
+const WALLS={Forest:'linear-gradient(135deg,#1c3b34,#264f44 45%,#1a2c3a)',Dusk:'linear-gradient(135deg,#2b1b46,#3b2a63 50%,#1a2540)',
+  Ember:'linear-gradient(135deg,#3a1d1d,#5a2f24 50%,#2a1a2e)',Mono:'linear-gradient(135deg,#1f2329,#2b313a 50%,#171a1f)',Sky:'linear-gradient(135deg,#1e3a5f,#2c5a8a 55%,#1a2c3a)'};
+function applyTheme(){
+  const s=store.get('settings',{accent:'Emerald',wall:'Forest',dark:false});
+  document.body.classList.toggle('dark',!!s.dark);
+  const a=ACCENTS[s.accent]||ACCENTS.Emerald;document.documentElement.style.setProperty('--accent',a[0]);document.documentElement.style.setProperty('--accent2',a[1]);
+  document.documentElement.style.setProperty('--wall',WALLS[s.wall]||WALLS.Forest);
+  return s;
+}
+
+/* ---------- window manager ---------- */
+let Z=10, wins={};
+function openWin(app){
+  if(wins[app.id]&&app.single){focusWin(wins[app.id]);return;}
+  const id='w'+(Date.now()+Math.random()).toString(36).slice(2,7);
+  const w=el('div','window');w.style.left=(60+Object.keys(wins).length*26)+'px';w.style.top=(50+Object.keys(wins).length*22)+'px';
+  w.style.width=(app.w||520)+'px';w.style.height=(app.h||380)+'px';w.style.zIndex=++Z;
+  w.innerHTML=`<div class="head"><div class="ti"><span class="g">${app.glyph}</span>${app.name}</div>
+    <div class="btns"><button class="mn">—</button><button class="mx">▢</button><button class="x">✕</button></div></div>
+    <div class="body"></div><div class="rsz"></div>`;
+  $('#desktop').appendChild(w);
+  app.render($('.body',w),w);
+  wins[id]=w; if(app.single)wins[app.id]=w; w.dataset.app=app.id;
+  // taskbar
+  const t=el('div','task');t.innerHTML=`<span>${app.glyph}</span>${app.name}`;t.dataset.for=id;
+  $('#tasks').appendChild(t);t.onclick=()=>{w.classList.contains('min')||$('.window:not(.min)')&&w.style.zIndex<Z?focusWin(w):w.classList.toggle('min');if(!w.classList.contains('min'))focusWin(w);};
+  w._task=t;
+  // controls
+  $('.x',w).onclick=()=>{w.remove();t.remove();delete wins[id];if(app.single)delete wins[app.id];};
+  $('.mn',w).onclick=()=>{w.classList.add('min');syncTasks();};
+  $('.mx',w).onclick=()=>toggleMax(w);
+  w.querySelector('.head').ondblclick=e=>{if(!e.target.closest('.btns'))toggleMax(w);};
+  w.onmousedown=()=>focusWin(w);
+  dragify(w);resizify(w);focusWin(w);
+  return w;
+}
+function focusWin(w){w.classList.remove('min');w.style.zIndex=++Z;syncTasks();}
+function toggleMax(w){if(w._max){Object.assign(w.style,w._max);w._max=null;}else{w._max={left:w.style.left,top:w.style.top,width:w.style.width,height:w.style.height};
+  Object.assign(w.style,{left:'0px',top:'0px',width:'100%',height:'calc(100% - var(--panelH))'});}}
+function syncTasks(){document.querySelectorAll('.task').forEach(t=>{const w=wins[t.dataset.for];t.classList.toggle('active',w&&!w.classList.contains('min')&&+w.style.zIndex===Z);});}
+function dragify(w){const h=$('.head',w);let sx,sy,ox,oy,on=false;
+  h.onmousedown=e=>{if(e.target.closest('.btns'))return;on=true;sx=e.clientX;sy=e.clientY;ox=parseInt(w.style.left);oy=parseInt(w.style.top);document.onmousemove=mv;document.onmouseup=()=>{on=false;document.onmousemove=null;};};
+  function mv(e){if(!on)return;w.style.left=Math.max(0,ox+e.clientX-sx)+'px';w.style.top=Math.max(0,oy+e.clientY-sy)+'px';}}
+function resizify(w){const r=$('.rsz',w);let sx,sy,ow,oh,on=false;
+  r.onmousedown=e=>{e.stopPropagation();on=true;sx=e.clientX;sy=e.clientY;ow=w.offsetWidth;oh=w.offsetHeight;document.onmousemove=mv;document.onmouseup=()=>{on=false;document.onmousemove=null;};};
+  function mv(e){if(!on)return;w.style.width=Math.max(280,ow+e.clientX-sx)+'px';w.style.height=Math.max(170,oh+e.clientY-sy)+'px';}}
+
+/* ---------- apps ---------- */
+const APPS=[
+ {id:'welcome',name:'Welcome',glyph:'👋',single:true,w:540,h:380,render:b=>{b.innerHTML=
+   `<div class="pad welcome"><h1>Welcome to HisokaOS</h1>
+    <p>A desktop environment built from scratch — boot screen, window manager, panel, and real working apps. Click the menu (bottom-left) to launch anything. Everything's themeable in Settings.</p>
+    <div class="chips"><span class="chip" data-open="calc">Open Calculator</span><span class="chip" data-open="term">Open Terminal</span><span class="chip" data-open="settings">Open Settings</span><span class="chip" data-open="files">Open Files</span></div></div>`;
+   b.querySelectorAll('.chip').forEach(c=>c.onclick=()=>launch(c.dataset.open));}},
+
+ {id:'calc',name:'Calculator',glyph:'🧮',single:true,w:300,h:400,render:b=>{
+   let cur='0',prev=null,op=null,fresh=false;
+   b.innerHTML=`<div class="calc"><div class="disp">0</div><div class="grid">
+     ${['C','±','%','÷','7','8','9','×','4','5','6','-','1','2','3','+'].map(k=>`<button class="${'÷×-+%'.includes(k)?'op':''}">${k}</button>`).join('')}
+     <button>0</button><button>.</button><button class="eq">=</button></div></div>`;
+   const disp=$('.disp',b);const upd=()=>disp.textContent=cur.length>10?(+cur).toPrecision(8):cur;
+   b.querySelectorAll('.calc button').forEach(btn=>btn.onclick=()=>{const k=btn.textContent;
+     if(k==='C'){cur='0';prev=null;op=null;}
+     else if(k==='±')cur=String(-parseFloat(cur));
+     else if(k==='%')cur=String(parseFloat(cur)/100);
+     else if('÷×-+'.includes(k)){prev=parseFloat(cur);op=k;fresh=true;}
+     else if(k==='='){if(op!==null){const a=prev,c=parseFloat(cur);cur=String(op==='÷'?a/c:op==='×'?a*c:op==='-'?a-c:a+c);op=null;}}
+     else if(k==='.'){if(!cur.includes('.'))cur+='.';}
+     else{if(fresh||cur==='0'){cur=k;fresh=false;}else cur+=k;}
+     upd();});}},
+
+ {id:'editor',name:'Text Editor',glyph:'📝',single:false,w:560,h:420,render:b=>{
+   b.innerHTML=`<div class="editor"><div class="tb"><button class="sv">Save</button><span class="st">saved to browser</span></div><textarea spellcheck="false"></textarea></div>`;
+   const ta=$('textarea',b);ta.value=store.get('doc','# HisokaOS Notes\n\nType here — it saves automatically.');
+   const save=()=>{store.set('doc',ta.value);$('.st',b).textContent='saved ✓ '+new Date().toLocaleTimeString();};
+   ta.oninput=()=>{clearTimeout(b._t);b._t=setTimeout(save,500);};$('.sv',b).onclick=save;}},
+
+ {id:'term',name:'Terminal',glyph:'🖥️',single:false,w:560,h:360,render:b=>{
+   b.innerHTML=`<div class="term"><div class="out"></div><div class="in"><span class="pr">jeffery@hisoka:~$</span><input autofocus></div></div>`;
+   const out=$('.out',b),inp=$('input',b);const p=t=>{const d=el('div');d.textContent=t;out.appendChild(d);};
+   p('HisokaOS shell — type "help".');
+   const cmds={help:()=>p('commands: help, echo, date, whoami, uname, clear, apps, open <app>, about'),
+     echo:a=>p(a.join(' ')),date:()=>p(new Date().toString()),whoami:()=>p('jeffery'),
+     uname:()=>p('HisokaOS 1.0 desktop (web)'),apps:()=>p(APPS.map(a=>a.id).join('  ')),
+     about:()=>p('A from-scratch desktop environment. Built milestone by milestone.'),
+     clear:()=>out.innerHTML='',open:a=>{if(APPS.find(x=>x.id===a[0])){launch(a[0]);p('opening '+a[0]+'…');}else p('no such app: '+(a[0]||''));}};
+   inp.onkeydown=e=>{if(e.key!=='Enter')return;const line=inp.value.trim();p('jeffery@hisoka:~$ '+line);inp.value='';
+     const[c,...a]=line.split(/\s+/);if(cmds[c])cmds[c](a);else if(line)p('command not found: '+c);
+     out.scrollTop=out.scrollHeight;};
+   b.onclick=()=>inp.focus();}},
+
+ {id:'files',name:'Files',glyph:'📁',single:true,w:560,h:400,render:b=>{
+   const fs={Home:['📄 readme.txt','🖼️ wallpaper.jpg','📁 Documents','📁 Pictures','📁 Downloads','🎵 song.mp3'],
+     Documents:['📄 notes.md','📄 resume.pdf','📊 budget.xlsx'],Pictures:['🖼️ flag.png','🖼️ coast.png','🖼️ moon.png'],Downloads:['📦 setup.deb','🗜️ archive.zip']};
+   b.innerHTML=`<div class="files"><div class="side">${Object.keys(fs).map((k,i)=>`<div class="${i?'':'on'}" data-d="${k}">📁 ${k}</div>`).join('')}</div><div class="main"></div></div>`;
+   const main=$('.main',b);const show=d=>{main.innerHTML=fs[d].map(f=>{const[g,...n]=f.split(' ');return `<div class="f"><div class="g">${g}</div><div class="n">${n.join(' ')}</div></div>`;}).join('');};
+   show('Home');b.querySelectorAll('.side div').forEach(s=>s.onclick=()=>{b.querySelectorAll('.side div').forEach(x=>x.classList.remove('on'));s.classList.add('on');show(s.dataset.d);});}},
+
+ {id:'settings',name:'Settings',glyph:'⚙️',single:true,w:600,h:430,render:(b,w)=>{
+   const s=store.get('settings',{accent:'Emerald',wall:'Forest',dark:false});
+   const panes={Appearance:()=>`
+     <div class="row"><div><div class="lbl">Dark mode</div><div class="sub">Switch the whole desktop to dark</div></div>
+       <div class="toggle ${s.dark?'on':''}" data-t="dark"><i></i></div></div>
+     <div class="row"><div><div class="lbl">Accent color</div><div class="sub">Highlights, buttons, focus</div></div>
+       <div class="swatches">${Object.entries(ACCENTS).map(([n,c])=>`<div class="sw ${s.accent===n?'on':''}" data-acc="${n}" title="${n}" style="background:${c[0]}"></div>`).join('')}</div></div>
+     <div class="row" style="flex-direction:column;align-items:flex-start;gap:10px"><div class="lbl">Wallpaper</div>
+       <div class="walls">${Object.entries(WALLS).map(([n,g])=>`<div class="w ${s.wall===n?'on':''}" data-wall="${n}" title="${n}" style="background:${g}"></div>`).join('')}</div></div>`,
+    System:()=>`<div class="row"><div class="lbl">Device name</div><div class="sub">hisoka-desktop</div></div>
+     <div class="row"><div class="lbl">OS</div><div class="sub">HisokaOS 1.0 (desktop)</div></div>
+     <div class="row"><div class="lbl">Memory</div><div class="sub">browser sandbox</div></div>
+     <div class="row"><div class="lbl">User</div><div class="sub">jeffery</div></div>`,
+    About:()=>`<div class="pad"><h1 style="font-size:22px">HisokaOS Desktop</h1>
+     <p style="color:#8a949b;line-height:1.6;margin-top:8px">A from-scratch desktop environment — window manager, panel, start menu, and real apps. Built milestone by milestone, verified each step. M1: shell + core apps.</p></div>`};
+   b.innerHTML=`<div class="settings"><div class="nav">${Object.keys(panes).map((k,i)=>`<div class="${i?'':'on'}" data-p="${k}">${k}</div>`).join('')}</div><div class="pane"></div></div>`;
+   const pane=$('.pane',b);const draw=k=>{pane.innerHTML=panes[k]();
+     pane.querySelectorAll('.sw').forEach(x=>x.onclick=()=>{s.accent=x.dataset.acc;store.set('settings',s);applyTheme();draw(k);});
+     pane.querySelectorAll('.w').forEach(x=>x.onclick=()=>{s.wall=x.dataset.wall;store.set('settings',s);applyTheme();draw(k);});
+     const tg=$('.toggle',pane);if(tg)tg.onclick=()=>{s.dark=!s.dark;store.set('settings',s);applyTheme();draw(k);};};
+   draw('Appearance');b.querySelectorAll('.nav div').forEach(n=>n.onclick=()=>{b.querySelectorAll('.nav div').forEach(x=>x.classList.remove('on'));n.classList.add('on');draw(n.dataset.p);});}},
+];
+function launch(id){const a=APPS.find(x=>x.id===id);if(a){openWin(a);closeStart();}}
+
+/* ---------- start menu + desktop icons ---------- */
+function renderApps(filter=''){const l=$('#applist');l.innerHTML='';
+  APPS.filter(a=>a.name.toLowerCase().includes(filter.toLowerCase())).forEach(a=>{
+    const d=el('div','app');d.innerHTML=`<div class="gl">${a.glyph}</div><div class="nm">${a.name}</div>`;d.onclick=()=>launch(a.id);l.appendChild(d);});}
+function openStart(){$('#startmenu').classList.add('open');$('#appsearch').value='';renderApps();setTimeout(()=>$('#appsearch').focus(),30);}
+function closeStart(){$('#startmenu').classList.remove('open');}
+$('#startbtn').onclick=e=>{e.stopPropagation();$('#startmenu').classList.contains('open')?closeStart():openStart();};
+$('#appsearch').oninput=e=>renderApps(e.target.value);
+document.onclick=e=>{if(!e.target.closest('#startmenu')&&!e.target.closest('#startbtn'))closeStart();};
+document.querySelectorAll('[data-pw]').forEach(b=>b.onclick=()=>{const a=b.dataset.pw;
+  if(a==='off'){$('#desktop').style.transition='opacity .5s';$('#desktop').style.opacity=0;setTimeout(()=>document.body.innerHTML='<div style="position:fixed;inset:0;background:#000"></div>',500);}
+  else{location.reload();}});
+const DESKICONS=['welcome','files','term','settings'];
+function renderIcons(){const c=$('#icons');c.innerHTML='';DESKICONS.forEach(id=>{const a=APPS.find(x=>x.id===id);
+  const d=el('div','dicon');d.innerHTML=`<div class="gl">${a.glyph}</div><div class="lb">${a.name}</div>`;d.ondblclick=()=>launch(id);c.appendChild(d);});}
+
+/* ---------- clock ---------- */
+function tick(){const d=new Date();$('#clock b').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  $('#clock span').textContent=d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});}
+
+/* ---------- start ---------- */
+applyTheme();renderIcons();tick();setInterval(tick,1000);boot();
+setTimeout(()=>openWin(APPS[0]),2600);
+</script></body></html>
